@@ -1,0 +1,16 @@
+[project]
+name = "unity-robotics-mcp"
+version = "0.1.0"
+description = "MCP server especialista em Unity Robotics (URDF Importer, ROS-TCP-Connector, ArticulationBody) com ponte para o Unity Editor"
+requires-python = ">=3.10"
+dependencies = ["mcp[cli]>=1.2"]
+
+[project.scripts]
+unity-robotics-mcp = "unity_robotics_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["unity_robotics_mcp*"]

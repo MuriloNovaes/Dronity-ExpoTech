@@ -1,0 +1,57 @@
+﻿DRONE - EXPORTACAO PARA UNITY
+=============================
+
+Arquivos desta pasta
+--------------------
+Drone.fbx            Modelo para importar na Unity (4 malhas: Drone_Body, Wheel_L, Wheel_R, LEDs)
+Drone.blend          Copia do arquivo do Blender (cena original, para editar depois)
+DroneController.cs   Script de movimento do Player (WASD / setas)
+LEIA-ME.txt          Este arquivo
+
+Como importar na Unity
+----------------------
+1. Arraste Drone.fbx e DroneController.cs para a pasta Assets do projeto.
+2. Selecione o Drone.fbx > aba Materials > Extract Materials (crie uma pasta Materials).
+   Se o preview ficar rosa em URP/HDRP: Edit > Rendering > Materials > Convert Selected Built-in Materials.
+3. Arraste o Drone.fbx para a cena. Clique com o botao direito no objeto > Prefab > Create Original Prefab (opcional).
+4. No objeto raiz do Drone:
+   - Add Component > Rigidbody (Mass 50~100).
+   - Add Component > Drone Controller.
+   - Arraste Wheel_L e Wheel_R (filhos do Drone) para os campos Wheel A e Wheel B.
+   - O script cria um Box Collider automatico se nao houver nenhum. Se preferir, adicione um manualmente.
+5. Crie um chao (GameObject > 3D Object > Plane) com Collider e aperte Play.
+   Frente do drone = eixo Z (perpendicular ao eixo das rodas, que e o X).
+
+LEDs brilhando
+--------------
+Selecione o material "LED" > ative Emission > cor vermelha, Intensity ~ 4.
+Para o efeito de brilho (glow) use Bloom no Volume de pos-processamento.
+
+Observacoes
+-----------
+- Tamanho: ~2,5 m de largura x 1,1 m de altura. Ajuste a Scale se quiser menor.
+- Se as rodas girarem ao contrario, marque "Invert Spin" no Drone Controller.
+- Cada roda tem a origem no centro, entao gira em torno do proprio eixo (local X).
+- Luzes, camera e chao do Blender nao foram exportados.
+- O script funciona com o Input System novo e com o Input Manager antigo.
+
+
+PULO (DroneJump.cs)
+-------------------
+1. Arraste DroneJump.cs para a pasta Assets.
+2. Adicione o componente "Drone Jump" no MESMO objeto raiz que tem o Rigidbody e o Drone Controller.
+3. Aperte Espaco (ou botao A/X do controle) para pular. Segure para pular mais alto.
+4. Ajustes: Jump Height (altura), Fall Multiplier (peso na queda), Ground Mask (o que conta como chao).
+
+
+SENSOR DE PROXIMIDADE E ARENA TATICA
+------------------------------------
+Arquivos: DroneProximitySensor.cs (novo), DroneController.cs, DroneJump.cs e CameraFollow.cs (atualizados),
+          Editor/TacticalArenaBuilder.cs (novo; precisa ficar numa pasta chamada Editor dentro de Assets)
+
+1. Na Unity, clique com o botao direito em DroneController > Show in Explorer (abre a pasta Assets).
+2. Copie para la os 4 arquivos .cs e a pasta Editor, escolhendo "Substituir os arquivos no destino".
+   (Substituir mantem os componentes ligados ao Drone. NAO arraste para dentro da Unity: ela cria copias "...1.cs".)
+3. Espere compilar. Menu: Tools > Drone > Construir Arena Tatica > Construir arena.
+4. Aperte Play. W/S acelera, A/D gira. O sensor desvia e pula sozinho. T liga/desliga o sensor.
+   Espaco so pula se "Manual Jump" estiver marcado no Drone Jump.

@@ -1,0 +1,9 @@
+{
+  "name": "com.robotics.mcp-bridge",
+  "version": "0.1.0",
+  "displayName": "Robotics MCP Bridge",
+  "description": "Ponte TCP local (127.0.0.1:8765) que permite ao servidor MCP 'unity-robotics' controlar o Unity Editor: importar URDF, configurar ArticulationBody, ROS-TCP-Connector e visuais do Blender.",
+  "unity": "2022.3",
+  "keywords": ["robotics", "ros", "urdf", "mcp"],
+  "author": { "name": "Robotics MCP" }
+}

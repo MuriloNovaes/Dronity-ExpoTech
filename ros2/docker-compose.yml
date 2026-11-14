@@ -1,0 +1,10 @@
+services:
+  ros2:
+    build: .
+    image: expotech/ros2-endpoint:humble
+    container_name: expotech_ros2
+    ports:
+      - "10000:10000"   # Unity ROSConnection -> 127.0.0.1:10000
+    volumes:
+      - ../RobotDescription/expo_drone:/robot:ro
+    restart: unless-stopped

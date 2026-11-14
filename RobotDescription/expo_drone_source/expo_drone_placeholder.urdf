@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!--
+  expo_drone: robô PROVISÓRIO do ExpoTech (drone de reconhecimento, tração diferencial).
+  Só primitivas, para validar ROS 2 + física enquanto a arte final é feita no Blender.
+  Ao trocar pela arte: manter os NOMES de links/juntas, os frames e o raio/distância das rodas,
+  assim os scripts e tópicos ROS continuam funcionando sem mudança.
+
+  Frames (ROS, x frente, y esquerda, z cima). base_link fica na altura do eixo das rodas.
+  Raio da roda 0.05 m, distância entre rodas (track) 0.17 m.
+-->
+<robot name="expo_drone">
+  <material name="chassis_grey"><color rgba="0.22 0.24 0.27 1"/></material>
+  <material name="tire_black"><color rgba="0.05 0.05 0.05 1"/></material>
+  <material name="accent_orange"><color rgba="0.95 0.45 0.1 1"/></material>
+  <material name="lens_blue"><color rgba="0.1 0.5 0.9 1"/></material>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>
+      <mass value="1.2"/>
+      <inertia ixx="0.00232" ixy="0" ixz="0" iyy="0.0052" iyz="0" izz="0.0068"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>
+      <geometry><box size="0.22 0.14 0.06"/></geometry>
+      <material name="chassis_grey"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.045" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.08 0.01"/></geometry>
+      <material name="accent_orange"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>
+      <geometry><box size="0.22 0.14 0.06"/></geometry>
+    </collision>
+  </link>
+
+  <link name="left_wheel_link">
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.00014" ixy="0" ixz="0" iyy="0.00025" iyz="0" izz="0.00014"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.03"/></geometry>
+      <material name="tire_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.03"/></geometry>
+    </collision>
+  </link>
+
+  <link name="right_wheel_link">
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.00014" ixy="0" ixz="0" iyy="0.00025" iyz="0" izz="0.00014"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.03"/></geometry>
+      <material name="tire_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.03"/></geometry>
+    </collision>
+  </link>
+
+  <link name="caster_link">
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.000024" ixy="0" ixz="0" iyy="0.000024" iyz="0" izz="0.000024"/>
+    </inertial>
+    <visual>
+      <geometry><sphere radius="0.02"/></geometry>
+      <material name="chassis_grey"/>
+    </visual>
+    <collision>
+      <geometry><sphere radius="0.02"/></geometry>
+    </collision>
+  </link>
+
+  <link name="camera_link">
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.0000425" ixy="0" ixz="0" iyy="0.0000225" iyz="0" izz="0.0000425"/>
+    </inertial>
+    <visual>
+      <geometry><box size="0.03 0.05 0.03"/></geometry>
+      <material name="lens_blue"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.03 0.05 0.03"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="left_wheel_link"/>
+    <origin xyz="0.03 0.085 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="2.0" velocity="20.0"/>
+    <dynamics damping="0.01" friction="0.0"/>
+  </joint>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="right_wheel_link"/>
+    <origin xyz="0.03 -0.085 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="2.0" velocity="20.0"/>
+    <dynamics damping="0.01" friction="0.0"/>
+  </joint>
+
+  <joint name="caster_joint" type="fixed">
+    <parent link="base_link"/><child link="caster_link"/>
+    <origin xyz="-0.09 0 -0.03" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/><child link="camera_link"/>
+    <origin xyz="0.115 0 0.03" rpy="0 0 0"/>
+  </joint>
+</robot>

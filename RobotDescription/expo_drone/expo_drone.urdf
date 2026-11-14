@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<!--
+  expo_drone: drone de reconhecimento do ExpoTech (arte final: RobotDescription/expo_drone_source/Drone.blend).
+  Duas rodas coaxiais grandes (estilo throwbot). O corpo fica pendurado no eixo, com o centro de massa
+  30 cm ABAIXO do eixo (baterias no fundo): é isso que o mantém em pé, como um pêndulo.
+  O controle limita a aceleração (1 m/s²) para a reação do torque das rodas não girar o corpo.
+
+  Medidas tiradas do Drone.fbx (ExpoTech > Diagnóstico > Medir modelo do drone):
+    raio da roda 0.55 m, largura da roda 0.645 m, centros das rodas a ±1.068 m do centro (track 2.136 m),
+    corpo ~2.05 x 0.80 x 0.74 m. A colisão usa primitivas; o visual vem do FBX.
+  Frames ROS: x frente, y esquerda, z cima. base_link = centro do eixo das rodas.
+  Visual: left_wheel_link recebe a malha "Wheel_R" do FBX e right_wheel_link a "Wheel_L"
+  (com a frente em +Z no Unity, o Wheel_L do Blender fica do lado direito).
+-->
+<robot name="expo_drone">
+  <material name="body_olive"><color rgba="0.33 0.36 0.30 1"/></material>
+  <material name="tire_black"><color rgba="0.05 0.05 0.05 1"/></material>
+  <material name="sensor_dark"><color rgba="0.1 0.1 0.12 1"/></material>
+
+  <link name="base_link">
+    <!-- Centro de massa 0.3 m abaixo do eixo (estabilidade de pêndulo) e 3 cm para trás,
+         compensando a câmera na frente: com isso o corpo fica nivelado em repouso. -->
+    <inertial>
+      <origin xyz="-0.03 0 -0.3" rpy="0 0 0"/>
+      <mass value="30"/>
+      <inertia ixx="5.87" ixy="0" ixz="0" iyy="1.94" iyz="0" izz="5.87"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.03" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.36" length="1.40"/></geometry>
+      <material name="body_olive"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.03" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.36" length="1.40"/></geometry>
+    </collision>
+  </link>
+
+  <link name="left_wheel_link">
+    <inertial>
+      <mass value="6"/>
+      <inertia ixx="0.662" ixy="0" ixz="0" iyy="0.9075" iyz="0" izz="0.662"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.55" length="0.645"/></geometry>
+      <material name="tire_black"/>
+    </visual>
+    <!-- Colisão estreita (0,16 m): as rodas reais têm roletes, que quase não resistem de lado.
+         Com a largura cheia (0,645 m) a roda "raspa" no chão e o drone quase não gira no lugar. -->
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.55" length="0.16"/></geometry>
+    </collision>
+  </link>
+
+  <link name="right_wheel_link">
+    <inertial>
+      <mass value="6"/>
+      <inertia ixx="0.662" ixy="0" ixz="0" iyy="0.9075" iyz="0" izz="0.662"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.55" length="0.645"/></geometry>
+      <material name="tire_black"/>
+    </visual>
+    <!-- Colisão estreita (0,16 m): as rodas reais têm roletes, que quase não resistem de lado.
+         Com a largura cheia (0,645 m) a roda "raspa" no chão e o drone quase não gira no lugar. -->
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.55" length="0.16"/></geometry>
+    </collision>
+  </link>
+
+  <!-- Sensores: links fixos com 3,5 kg (eletrônica + suporte), razão de massa 8,6:1 com o corpo. -->
+  <link name="lidar_link">
+    <inertial>
+      <mass value="3.5"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <geometry><cylinder radius="0.08" length="0.08"/></geometry>
+      <material name="sensor_dark"/>
+    </visual>
+  </link>
+
+  <link name="camera_link">
+    <inertial>
+      <mass value="3.5"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <geometry><box size="0.06 0.12 0.06"/></geometry>
+      <material name="sensor_dark"/>
+    </visual>
+  </link>
+
+  <link name="imu_link">
+    <inertial>
+      <mass value="3.5"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="left_wheel_link"/>
+    <origin xyz="0 1.068 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="120" velocity="15"/>
+    <dynamics damping="0.05" friction="0.0"/>
+  </joint>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="right_wheel_link"/>
+    <origin xyz="0 -1.068 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="120" velocity="15"/>
+    <dynamics damping="0.05" friction="0.0"/>
+  </joint>
+
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/><child link="lidar_link"/>
+    <origin xyz="-0.12 0 0.44" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/><child link="camera_link"/>
+    <origin xyz="0.38 0 0.02" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/><child link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+</robot>

@@ -1,0 +1,23 @@
+* text=auto
+
+# Scripts que rodam no container Linux precisam de LF
+*.sh text eol=lf
+Dockerfile text eol=lf
+
+# Assets da Unity (YAML) e código
+*.cs text diff=csharp
+*.unity text
+*.prefab text
+*.mat text
+*.asset text
+*.meta text
+*.urdf text
+*.physicMaterial text
+
+# Binários
+*.fbx binary
+*.glb binary
+*.blend binary
+*.png binary
+*.jpg binary
+*.pdf binary
