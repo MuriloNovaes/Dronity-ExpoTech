@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ExpoTech · Drone 3D</title>
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe-v1.4.2.min.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #1b2024; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    #info { position: fixed; z-index: 10; left: 16px; top: 14px; color: #e8ebee; font-size: 15px; }
+    #info b { color: #fff; font-size: 18px; }
+    #info a { color: #9fc5ff; }
+  </style>
+</head>
+<body>
+  <div id="info"><b>ExpoTech · Drone</b><br>Arraste para girar · <a href="index.html">abrir em AR</a></div>
+  <a-scene vr-mode-ui="enabled: false" renderer="colorManagement: true; antialias: true" background="color: #1b2024">
+    <a-assets timeout="30000">
+      <a-asset-item id="drone" src="https://cdn.jsdelivr.net/gh/MuriloNovaes/Dronity-ExpoTech@ar-v1/ar/models/expo_drone.glb"></a-asset-item>
+    </a-assets>
+    <a-entity id="turntable" drag-rotate animation="property: rotation; to: 0 360 0; dur: 18000; easing: linear; loop: true">
+      <a-gltf-model id="model" src="#drone"></a-gltf-model>
+    </a-entity>
+    <a-cylinder radius="2" height="0.04" position="0 -0.02 0" color="#2c333a"></a-cylinder>
+    <a-entity light="type: ambient; intensity: 0.8"></a-entity>
+    <a-entity light="type: directional; intensity: 1.4" position="2 4 3"></a-entity>
+    <a-entity camera position="0 1.6 3.6" rotation="-14 0 0" look-controls="enabled: false"></a-entity>
+  </a-scene>
+  <script>
+    // Arrastar gira o drone (e pausa o giro automático enquanto arrasta).
+    AFRAME.registerComponent("drag-rotate", {
+      init: function () {
+        var el = this.el, down = false, lastX = 0;
+        var canvas = function () { return el.sceneEl.canvas; };
+        el.sceneEl.addEventListener("loaded", function () {
+          var c = canvas();
+          var start = function (x) { down = true; lastX = x; el.setAttribute("animation", "enabled", false); };
+          var move = function (x) {
+            if (!down) return;
+            var r = el.getAttribute("rotation");
+            el.setAttribute("rotation", { x: r.x, y: r.y + (x - lastX) * 0.4, z: r.z });
+            lastX = x;
+          };
+          c.addEventListener("mousedown", function (e) { start(e.clientX); });
+          c.addEventListener("mousemove", function (e) { move(e.clientX); });
+          window.addEventListener("mouseup", function () { down = false; });
+          c.addEventListener("touchstart", function (e) { start(e.touches[0].clientX); });
+          c.addEventListener("touchmove", function (e) { move(e.touches[0].clientX); });
+          window.addEventListener("touchend", function () { down = false; });
+        });
+      }
+    });
+    window.expoPreview = { modelLoaded: false };
+    document.getElementById("model").addEventListener("model-loaded", function () { window.expoPreview.modelLoaded = true; });
+  </script>
+</body>
+</html>

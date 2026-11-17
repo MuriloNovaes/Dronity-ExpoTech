@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>ExpoTech AR · Drone</title>
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe-v1.4.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+  <style>
+    /* Fundo transparente: o vídeo da câmera do AR.js fica atrás da página (z-index -2). */
+    html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    #hud {
+      position: fixed; z-index: 10; left: 12px; right: 12px; top: 12px;
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px;
+      background: rgba(20, 24, 28, 0.82); color: #f1f3f4; font-size: 15px; line-height: 1.3;
+    }
+    #dot { width: 12px; height: 12px; border-radius: 50%; background: #e0452b; flex: none; }
+    #hud.found #dot { background: #3cb371; }
+    #hud b { color: #fff; }
+    #actions { position: fixed; z-index: 10; left: 12px; right: 12px; bottom: 16px; display: flex; gap: 10px; justify-content: center; }
+    #actions button, #actions a {
+      appearance: none; border: 0; border-radius: 22px; padding: 10px 16px; font-size: 14px; font-weight: 600;
+      background: rgba(20, 24, 28, 0.82); color: #f1f3f4; text-decoration: none;
+    }
+    .a-enter-vr, .a-enter-ar { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="hud"><span id="dot"></span><span id="status"><b>ExpoTech AR</b> · aponte a câmera para o marcador</span></div>
+  <div id="actions">
+    <button id="spin" type="button">Pausar giro</button>
+    <a id="markerLink" href="marker/expotech-marker.png" target="_blank" rel="noopener">Ver marcador</a>
+  </div>
+
+  <script>
+    // Modelo servido do GitHub pelo jsDelivr (versão fixada por tag: troque a tag ao atualizar o modelo).
+    var params = new URLSearchParams(location.search);
+    // ?model=<url> troca o modelo (útil para testar um arquivo local antes de publicar).
+    var MODEL_URL = params.get("model") || "https://cdn.jsdelivr.net/gh/MuriloNovaes/Dronity-ExpoTech@ar-v1/ar/models/expo_drone.glb";
+
+    // ?marker=hiro usa o marcador Hiro padrão do AR.js; ?test=<imagem> usa uma imagem no lugar da câmera.
+    var useHiro = params.get("marker") === "hiro";
+    var testImage = params.get("test");
+    var source = testImage
+      ? "sourceType: image; sourceUrl: " + testImage + "; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;"
+      : "sourceType: webcam;";
+    var marker = useHiro
+      ? 'preset="hiro"'
+      : 'type="pattern" url="marker/expotech.patt"';
+    if (useHiro) document.getElementById("markerLink").href = "https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png";
+
+    document.write(
+      '<a-scene embedded vr-mode-ui="enabled: false" loading-screen="enabled: false"' +
+      ' renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true"' +
+      ' arjs="' + source + ' debugUIEnabled: false; patternRatio: 0.5;">' +
+      '  <a-assets timeout="30000"><a-asset-item id="drone" src="' + MODEL_URL + '"></a-asset-item></a-assets>' +
+      '  <a-marker id="marker" ' + marker + ' smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2" emitevents="true">' +
+      '    <a-entity id="spinner" animation="property: rotation; to: 0 360 0; dur: 14000; easing: linear; loop: true">' +
+      '      <a-gltf-model id="model" src="#drone" position="0 0 0" scale="0.35 0.35 0.35" rotation="0 0 0"></a-gltf-model>' +
+      '    </a-entity>' +
+      '  </a-marker>' +
+      '  <a-entity light="type: ambient; intensity: 0.9"></a-entity>' +
+      '  <a-entity light="type: directional; intensity: 1.3" position="1 3 2"></a-entity>' +
+      '  <a-entity camera></a-entity>' +
+      '</a-scene>'
+    );
+  </script>
+
+  <script>
+    var hud = document.getElementById("hud");
+    var status = document.getElementById("status");
+    var markerEl = document.getElementById("marker");
+    var spinner = document.getElementById("spinner");
+    var spinning = true;
+    window.expoAR = { found: 0, modelLoaded: false, error: null };
+
+    markerEl.addEventListener("markerFound", function () {
+      window.expoAR.found++;
+      hud.classList.add("found");
+      status.innerHTML = "<b>Drone detectado</b> · aproxime ou gire o marcador";
+    });
+    markerEl.addEventListener("markerLost", function () {
+      hud.classList.remove("found");
+      status.innerHTML = "<b>ExpoTech AR</b> · aponte a câmera para o marcador";
+    });
+    document.getElementById("model").addEventListener("model-loaded", function () { window.expoAR.modelLoaded = true; });
+    document.getElementById("model").addEventListener("model-error", function (e) {
+      window.expoAR.error = "modelo";
+      status.innerHTML = "<b>Erro</b> ao carregar o modelo do GitHub";
+    });
+    document.getElementById("spin").addEventListener("click", function () {
+      spinning = !spinning;
+      spinner.setAttribute("animation", "enabled", spinning);
+      this.textContent = spinning ? "Pausar giro" : "Girar drone";
+    });
+    window.addEventListener("camera-error", function () {
+      window.expoAR.error = "camera";
+      status.innerHTML = "<b>Sem câmera</b> · permita o acesso à câmera (a página precisa de HTTPS)";
+    });
+  </script>
+</body>
+</html>
