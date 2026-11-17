@@ -68,7 +68,7 @@
 
   <script>
     var hud = document.getElementById("hud");
-    var status = document.getElementById("status");
+    var statusEl = document.getElementById("status"); // não usar "status": é a propriedade window.status do navegador
     var markerEl = document.getElementById("marker");
     var spinner = document.getElementById("spinner");
     var spinning = true;
@@ -77,16 +77,16 @@
     markerEl.addEventListener("markerFound", function () {
       window.expoAR.found++;
       hud.classList.add("found");
-      status.innerHTML = "<b>Drone detectado</b> · aproxime ou gire o marcador";
+      statusEl.innerHTML = "<b>Drone detectado</b> · aproxime ou gire o marcador";
     });
     markerEl.addEventListener("markerLost", function () {
       hud.classList.remove("found");
-      status.innerHTML = "<b>ExpoTech AR</b> · aponte a câmera para o marcador";
+      statusEl.innerHTML = "<b>ExpoTech AR</b> · aponte a câmera para o marcador";
     });
     document.getElementById("model").addEventListener("model-loaded", function () { window.expoAR.modelLoaded = true; });
     document.getElementById("model").addEventListener("model-error", function (e) {
       window.expoAR.error = "modelo";
-      status.innerHTML = "<b>Erro</b> ao carregar o modelo do GitHub";
+      statusEl.innerHTML = "<b>Erro</b> ao carregar o modelo do GitHub";
     });
     document.getElementById("spin").addEventListener("click", function () {
       spinning = !spinning;
@@ -95,7 +95,7 @@
     });
     window.addEventListener("camera-error", function () {
       window.expoAR.error = "camera";
-      status.innerHTML = "<b>Sem câmera</b> · permita o acesso à câmera (a página precisa de HTTPS)";
+      statusEl.innerHTML = "<b>Sem câmera</b> · permita o acesso à câmera (a página precisa de HTTPS)";
     });
   </script>
 </body>
