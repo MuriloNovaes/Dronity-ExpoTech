@@ -44,3 +44,7 @@ __pycache__/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Cópias de recuperação da Unity (locais)
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta

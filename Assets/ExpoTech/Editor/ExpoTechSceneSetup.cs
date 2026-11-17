@@ -49,7 +49,8 @@ namespace ExpoTech.EditorTools
             if (cam != null && robot != null)
             {
                 var baseLink = robot.transform.Find("base_link");
-                var follow = cam.GetComponent<ExpoCameraFollow>() ?? Undo.AddComponent<ExpoCameraFollow>(cam.gameObject);
+                var follow = cam.GetComponent<ExpoCameraFollow>();
+                if (follow == null) follow = Undo.AddComponent<ExpoCameraFollow>(cam.gameObject);
                 follow.target = baseLink;
                 cam.transform.position = baseLink.position + new Vector3(0f, 3f, -6f);
                 cam.transform.LookAt(baseLink.position);

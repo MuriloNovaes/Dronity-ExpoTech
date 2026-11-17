@@ -35,6 +35,8 @@ namespace ExpoTech
         [Tooltip("Abertura da busca de caminho, para cada lado (graus)")] public float searchAngle = 75f;
         [Tooltip("A partir dessa distância livre o caminho é considerado aberto (m)")] public float clearDistance = 6f;
         [Tooltip("Meia largura do drone, para o caminho caber nele (m)")] public float halfWidth = 1.4f;
+        [Tooltip("Altura dos raios baixos acima do chão (m): enxergam o que fica abaixo do LiDAR")] public float lowSensorHeight = 0.4f;
+        [Tooltip("Altura do eixo das rodas acima do chão (m) = raio da roda")] public float axleHeight = 0.55f;
 
         [Header("Recuperação quando preso")]
         public float stuckTime = 2.5f;
@@ -52,6 +54,7 @@ namespace ExpoTech
         float lastAngle, commitTimer, sampleTimer;
         bool reorienting;
         Vector3 targetDir;
+        readonly RaycastHit[] lowHits = new RaycastHit[16];
         readonly System.Collections.Generic.Queue<Vector3> history = new System.Collections.Generic.Queue<Vector3>();
         string lastPublished;
         ROSConnection ros;
@@ -224,7 +227,11 @@ namespace ExpoTech
             return -Vector3.SignedAngle(fwd, worldDir, Vector3.up) * Mathf.Deg2Rad;
         }
 
-        /// <summary>Menor distância do LiDAR num leque com a largura do drone em torno do ângulo (rad, ROS).</summary>
+        /// <summary>
+        /// Distância livre num leque com a largura do drone em torno do ângulo (rad, ROS): o menor valor
+        /// entre o LiDAR (~1 m do chão) e raios baixos, na altura das rodas. Sem os raios baixos, mesas e
+        /// caixas mais baixas que o LiDAR ficam invisíveis e o piloto briga com o assistente de desvio.
+        /// </summary>
         float FreeDistance(float angle)
         {
             var r = lidar.Ranges;
@@ -241,7 +248,25 @@ namespace ExpoTech
                 if (float.IsNegativeInfinity(v)) v = 0f;
                 if (v < nearest) nearest = v;
             }
+            for (int k = -1; k <= 1; k++)
+                nearest = Mathf.Min(nearest, LowDistance(angle + k * halfFan));
             return float.IsPositiveInfinity(nearest) ? clearDistance * 2f : nearest;
+        }
+
+        /// <summary>Raio horizontal na altura das rodas (lowSensorHeight acima do chão), ignorando o próprio drone.</summary>
+        float LowDistance(float angle)
+        {
+            Vector3 fwd = baseBody.transform.forward;
+            fwd.y = 0f;
+            Vector3 dir = Quaternion.AngleAxis(-angle * Mathf.Rad2Deg, Vector3.up) * fwd.normalized;
+            Vector3 origin = baseBody.transform.position;
+            origin.y += lowSensorHeight - axleHeight;
+            int count = Physics.SphereCastNonAlloc(origin, 0.2f, dir, lowHits, clearDistance * 2f, ~0, QueryTriggerInteraction.Ignore);
+            float best = float.PositiveInfinity;
+            for (int i = 0; i < count; i++)
+                if (!lowHits[i].collider.transform.IsChildOf(transform) && lowHits[i].distance > 0f && lowHits[i].distance < best)
+                    best = lowHits[i].distance;
+            return best;
         }
     }
 }
