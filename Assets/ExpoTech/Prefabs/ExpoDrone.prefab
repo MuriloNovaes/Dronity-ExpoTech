@@ -368,7 +368,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 6
   m_Mass: 3.5
-  m_ParentAnchorPosition: {x: 0, y: 0.01999998, z: 0.3800001}
+  m_ParentAnchorPosition: {x: -0.000000033220665, y: 0.01999998, z: 0.3800001}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
@@ -546,7 +546,7 @@ MonoBehaviour:
   rateHz: 20
   fieldOfView: 0.5
   minRange: 0.05
-  maxRange: 6
+  maxRange: 4
   rays: 5
   minPitchDeg: -2
   mask:
@@ -615,7 +615,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 6
   m_Mass: 3.5
-  m_ParentAnchorPosition: {x: 0, y: 0.44, z: -0.119999886}
+  m_ParentAnchorPosition: {x: 0.000000010490723, y: 0.44, z: -0.119999886}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
@@ -722,7 +722,7 @@ MonoBehaviour:
   rateHz: 10
   samples: 360
   rangeMin: 0.3
-  rangeMax: 20
+  rangeMax: 12
   rangeNoise: 0.01
   mask:
     serializedVersion: 2
@@ -2529,18 +2529,18 @@ MonoBehaviour:
   drive: {fileID: 5482767146646169933}
   baseBody: {fileID: 2196567330866257780}
   statusLeds: {fileID: 1784585832596209604}
-  minRange: 4
-  lookAheadTime: 0.8
+  minRange: 2.2
+  lookAheadTime: 0.5
   sensorHeightAboveFloor: 0.35
   minObstacleHeight: 0.3
   jumpClearance: 0.2
   jumpTriggerBuffer: 0.3
   landingMargin: 0.5
-  stopDistance: 1.2
-  slowDistance: 5
+  stopDistance: 0.9
+  slowDistance: 3
   minSpeedFactor: 0.3
-  dodgeHoldTime: 0.5
-  probeDistance: 4
+  dodgeHoldTime: 0.3
+  probeDistance: 2.5
   probeAngles:
   - 15
   - 30
@@ -2548,7 +2548,7 @@ MonoBehaviour:
   - 60
   - 75
   - 90
-  dodgeTurnRate: 1.5
+  dodgeTurnRate: 0.8
 --- !u!114 &222065836431696592
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2604,19 +2604,22 @@ MonoBehaviour:
   stateTopic: /expo_drone/autopilot_state
   lidar: {fileID: 9054244749917918070}
   baseBody: {fileID: 2196567330866257780}
-  cruiseSpeed: 2
+  cruiseSpeed: 1.6
   minSpeed: 0.6
-  maxTurn: 1.2
-  steerGain: 1.5
+  maxTurn: 0.7
+  steerGain: 0.9
   searchAngle: 75
-  clearDistance: 6
+  clearDistance: 4
   halfWidth: 1.4
+  lowSensorHeight: 0.4
+  axleHeight: 0.55
   stuckTime: 2.5
   reverseTime: 1.5
   progressWindow: 8
   minProgress: 1.5
   commitTime: 4
-  switchPenalty: 0.4
+  switchPenalty: 0.8
+  turnSmoothing: 0.05
 --- !u!114 &5030066760519334200
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2847,7 +2850,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 6
   m_Mass: 6
-  m_ParentAnchorPosition: {x: 1.0679998, y: 0, z: 0}
+  m_ParentAnchorPosition: {x: 1.0679998, y: 0, z: 0.00000009336751}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 0, w: 1}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0, y: 0, z: -0, w: 1}
@@ -3087,7 +3090,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 6
   m_Mass: 6
-  m_ParentAnchorPosition: {x: -1.0680008, y: 0, z: 0}
+  m_ParentAnchorPosition: {x: -1.0679998, y: 0, z: -0.00000009336751}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 0, w: 1}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0, y: 0, z: -0, w: 1}

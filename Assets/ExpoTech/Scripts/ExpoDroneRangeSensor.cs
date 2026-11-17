@@ -16,7 +16,7 @@ namespace ExpoTech
         public float rateHz = 20f;
         [Tooltip("Abertura do cone (rad)")] public float fieldOfView = 0.5f;
         public float minRange = 0.05f;
-        public float maxRange = 6f;
+        public float maxRange = 4f;
         [Tooltip("Raios por eixo dentro do cone")] public int rays = 5;
         [Tooltip("Ângulo mais baixo do cone (graus, negativo = para baixo). Evita medir o próprio chão.")]
         public float minPitchDeg = -2f;

@@ -28,12 +28,12 @@ namespace ExpoTech
         [Tooltip("base_link")] public ArticulationBody baseBody;
 
         [Header("Exploração")]
-        [Tooltip("Velocidade de cruzeiro (m/s)")] public float cruiseSpeed = 2.0f;
+        [Tooltip("Velocidade de cruzeiro (m/s)")] public float cruiseSpeed = 1.6f;
         [Tooltip("Velocidade mínima quando há obstáculo perto (m/s)")] public float minSpeed = 0.6f;
-        [Tooltip("Giro máximo (rad/s)")] public float maxTurn = 1.2f;
-        public float steerGain = 1.5f;
+        [Tooltip("Giro máximo (rad/s)")] public float maxTurn = 0.7f;
+        public float steerGain = 0.9f;
         [Tooltip("Abertura da busca de caminho, para cada lado (graus)")] public float searchAngle = 75f;
-        [Tooltip("A partir dessa distância livre o caminho é considerado aberto (m)")] public float clearDistance = 6f;
+        [Tooltip("A partir dessa distância livre o caminho é considerado aberto (m)")] public float clearDistance = 4f;
         [Tooltip("Meia largura do drone, para o caminho caber nele (m)")] public float halfWidth = 1.4f;
         [Tooltip("Altura dos raios baixos acima do chão (m): enxergam o que fica abaixo do LiDAR")] public float lowSensorHeight = 0.4f;
         [Tooltip("Altura do eixo das rodas acima do chão (m) = raio da roda")] public float axleHeight = 0.55f;
@@ -46,7 +46,15 @@ namespace ExpoTech
         [Tooltip("Janela para medir o avanço (s)")] public float progressWindow = 8f;
         [Tooltip("Avanço mínimo na janela; abaixo disso escolhe nova direção (m)")] public float minProgress = 1.5f;
         [Tooltip("Tempo seguindo a nova direção antes de voltar a explorar livremente (s)")] public float commitTime = 4f;
-        [Tooltip("Penalidade por trocar de lado (histerese)")] public float switchPenalty = 0.4f;
+        [Tooltip("Penalidade por trocar de lado (histerese)")] public float switchPenalty = 0.8f;
+        [Tooltip("Suavização do giro por passo de física (0-1; menor = mais suave)")] public float turnSmoothing = 0.05f;
+
+        [Header("Exploração (memória de lugares visitados)")]
+        [Tooltip("Penalidade máxima, em metros de caminho livre, para ir a um lugar muito visitado; 0 desliga")]
+        public float explorationWeight = 3f;
+        [Tooltip("Tamanho do quadrado da memória (m)")] public float explorationCell = 2f;
+        [Tooltip("Visitas ao mesmo quadrado que fazem ele procurar outro lugar (porta/outra sala)")] public int boredVisits = 10;
+        [Tooltip("Intervalo mínimo entre essas buscas (s)")] public float boredCooldownTime = 20f;
 
         public string State { get; private set; } = "DESLIGADO";
 
@@ -55,6 +63,8 @@ namespace ExpoTech
         bool reorienting;
         Vector3 targetDir;
         readonly RaycastHit[] lowHits = new RaycastHit[16];
+        float boredCooldown;
+        readonly System.Collections.Generic.Dictionary<Vector2Int, int> visits = new System.Collections.Generic.Dictionary<Vector2Int, int>();
         readonly System.Collections.Generic.Queue<Vector3> history = new System.Collections.Generic.Queue<Vector3>();
         string lastPublished;
         ROSConnection ros;
@@ -164,8 +174,10 @@ namespace ExpoTech
                 float rad = deg * Mathf.Deg2Rad;
                 float free = FreeDistance(rad);
                 if (Mathf.Abs(deg) < 0.1f) frontClear = free;
-                // Prefere caminhos livres, perto da direção preferida, sem trocar de lado à toa.
-                float score = Mathf.Min(free, clearDistance) - 0.6f * Mathf.Abs(rad - preferred);
+                // Prefere caminhos livres, perto da direção preferida, sem trocar de lado à toa,
+                // e que levem a lugares menos visitados (senão ele fica dando voltas na mesma sala).
+                float score = Mathf.Min(free, clearDistance) - 0.6f * Mathf.Abs(rad - preferred)
+                              - NoveltyAlong(rad, free);
                 if (Mathf.Sign(rad) != Mathf.Sign(lastAngle) && Mathf.Abs(rad) > 0.1f) score -= switchPenalty;
                 if (score > bestScore) { bestScore = score; bestAngle = rad; }
             }
@@ -181,7 +193,7 @@ namespace ExpoTech
                 turnDir = bestAngle >= 0f ? 1f : -1f;
             }
 
-            smoothedTurn = Mathf.Lerp(smoothedTurn, Mathf.Clamp(steerGain * bestAngle, -maxTurn, maxTurn), 0.1f);
+            smoothedTurn = Mathf.Lerp(smoothedTurn, Mathf.Clamp(steerGain * bestAngle, -maxTurn, maxTurn), turnSmoothing);
             angular = smoothedTurn;
             linear = Mathf.Lerp(minSpeed, cruiseSpeed, Mathf.Clamp01(frontClear / clearDistance))
                      * Mathf.Lerp(1f, 0.5f, Mathf.Abs(bestAngle) / (searchAngle * Mathf.Deg2Rad));
@@ -197,26 +209,62 @@ namespace ExpoTech
             sampleTimer = 0f;
             Vector3 p = baseBody.transform.position;
             history.Enqueue(p);
+            var cell = Cell(p);
+            visits[cell] = visits.TryGetValue(cell, out int v) ? v + 1 : 1;
             int window = Mathf.CeilToInt(progressWindow / 0.5f);
             if (history.Count <= window) return;
             Vector3 old = history.Dequeue();
+            boredCooldown -= 0.5f;
             if (reorienting || commitTimer > 0f) return;
-            if (Vector3.Distance(new Vector3(p.x, 0f, p.z), new Vector3(old.x, 0f, old.z)) >= minProgress) return;
+            bool noProgress = Vector3.Distance(new Vector3(p.x, 0f, p.z), new Vector3(old.x, 0f, old.z)) < minProgress;
+            // "Entediado": está passando de novo por um lugar já muito visitado (dando voltas na sala).
+            bool bored = explorationWeight > 0f && boredCooldown <= 0f && visits[cell] >= boredVisits;
+            if (!noProgress && !bored) return;
+            if (bored) boredCooldown = boredCooldownTime;
 
-            // Direção mais aberta em 360°, evitando a frente atual (onde ficou indo e voltando).
-            float bestFree = -1f, bestRad = Mathf.PI;
+            // Direção mais aberta em 360° (sem a frente atual se ficou indo e voltando),
+            // preferindo as que levam a lugares pouco visitados - p.ex. a porta para outra sala.
+            float bestFree = float.NegativeInfinity, bestRad = Mathf.PI;
             for (float deg = -180f; deg < 180f; deg += 10f)
             {
-                if (Mathf.Abs(deg) < 40f) continue;
+                if (noProgress && Mathf.Abs(deg) < 40f) continue;
                 float rad = deg * Mathf.Deg2Rad;
-                float free = Mathf.Min(FreeDistance(rad), 15f);
+                float reach = FreeDistance(rad);
+                if (reach < 1.5f) continue;
+                float free = 0.5f * Mathf.Min(reach, 15f) - 2f * NoveltyAlong(rad, reach);
                 if (free > bestFree) { bestFree = free; bestRad = rad; }
             }
+            if (float.IsNegativeInfinity(bestFree)) return;
             Vector3 fwd = baseBody.transform.forward;
             fwd.y = 0f;
             targetDir = Quaternion.AngleAxis(-bestRad * Mathf.Rad2Deg, Vector3.up) * fwd.normalized;
             reorienting = true;
             history.Clear();
+        }
+
+        Vector2Int Cell(Vector3 p) => new Vector2Int(Mathf.FloorToInt(p.x / explorationCell), Mathf.FloorToInt(p.z / explorationCell));
+
+        /// <summary>
+        /// Penalidade (em metros de "caminho livre") por ir para um lugar já muito visitado: olha o quadrado
+        /// a `distance` metros na direção `angle` (rad, ROS). Cresce com as visitas até explorationWeight.
+        /// </summary>
+        float Novelty(float angle, float distance)
+        {
+            if (explorationWeight <= 0f) return 0f;
+            Vector3 fwd = baseBody.transform.forward;
+            fwd.y = 0f;
+            Vector3 dir = Quaternion.AngleAxis(-angle * Mathf.Rad2Deg, Vector3.up) * fwd.normalized;
+            Vector3 point = baseBody.transform.position + dir * Mathf.Max(distance, explorationCell);
+            int v = visits.TryGetValue(Cell(point), out int n) ? n : 0;
+            return explorationWeight * Mathf.Clamp01(v / 6f);
+        }
+
+        /// <summary>Média da penalidade de "já visitado" ao longo da direção, a cada 2 m até onde está livre.</summary>
+        float NoveltyAlong(float angle, float reach)
+        {
+            float sum = 0f; int n = 0;
+            for (float d = explorationCell; d <= Mathf.Min(reach, 10f) || n == 0; d += explorationCell) { sum += Novelty(angle, d); n++; }
+            return sum / n;
         }
 
         /// <summary>Ângulo (rad, convenção ROS: positivo = esquerda) da frente do drone até a direção dada.</summary>

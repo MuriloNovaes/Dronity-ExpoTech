@@ -17,7 +17,7 @@ namespace ExpoTech
         public float rateHz = 10f;
         public int samples = 360;
         public float rangeMin = 0.3f;
-        public float rangeMax = 20f;
+        public float rangeMax = 12f;
         [Tooltip("Desvio padrão do ruído de distância (m)")] public float rangeNoise = 0.01f;
         public LayerMask mask = ~0;
         [Tooltip("Raiz do robô (raios que batem nele são ignorados)")] public Transform robotRoot;

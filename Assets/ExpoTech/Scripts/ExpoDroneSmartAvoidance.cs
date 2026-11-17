@@ -36,8 +36,8 @@ namespace ExpoTech
         [Tooltip("Renderer dos LEDs: a cor mostra o estado")] public Renderer statusLeds;
 
         [Header("Alcance do sensor")]
-        public float minRange = 4f;
-        public float lookAheadTime = 0.8f;
+        public float minRange = 2.2f;
+        public float lookAheadTime = 0.5f;
         public float sensorHeightAboveFloor = 0.35f;
         [Tooltip("Abaixo disso é ignorado (as rodas passam por cima)")] public float minObstacleHeight = 0.3f;
 
@@ -47,13 +47,13 @@ namespace ExpoTech
         [Tooltip("Folga extra exigida depois do obstáculo para pousar (m)")] public float landingMargin = 0.5f;
 
         [Header("Desvio lateral")]
-        public float stopDistance = 1.2f;
-        public float slowDistance = 5f;
+        public float stopDistance = 0.9f;
+        public float slowDistance = 3f;
         [Range(0.1f, 1f)] public float minSpeedFactor = 0.3f;
-        public float dodgeHoldTime = 0.5f;
-        public float probeDistance = 4f;
+        public float dodgeHoldTime = 0.3f;
+        public float probeDistance = 2.5f;
         public float[] probeAngles = { 15f, 30f, 45f, 60f, 75f, 90f };
-        [Tooltip("Velocidade angular usada para desviar (rad/s)")] public float dodgeTurnRate = 1.5f;
+        [Tooltip("Velocidade angular usada para desviar (rad/s)")] public float dodgeTurnRate = 0.8f;
 
         public string State { get; private set; } = "LIVRE";
         public float NearestDistance { get; private set; } = -1f;
